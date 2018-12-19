@@ -1,9 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.28010.2048
+VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nbp-aerodrom", "nbp-aerodrom\nbp-aerodrom.csproj", "{1D6C9C03-BCF6-4BCE-88AA-9BB984D9EA4A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nbp-test", "nbp-test\nbp-test.csproj", "{182040B4-137B-4A8A-BA9F-AA0EC124DD8C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nbp-aerodrom-model", "nbp-aerodrom-model\nbp-aerodrom-model.csproj", "{01015FAA-C14B-4E8B-BD37-002F5A65512D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nbp-aerodrom-api", "nbp-aerodrom-api\nbp-aerodrom-api.csproj", "{ECDEBBF2-A55E-466D-9780-8C2BDE35B465}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +21,18 @@ Global
 		{1D6C9C03-BCF6-4BCE-88AA-9BB984D9EA4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1D6C9C03-BCF6-4BCE-88AA-9BB984D9EA4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1D6C9C03-BCF6-4BCE-88AA-9BB984D9EA4A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{182040B4-137B-4A8A-BA9F-AA0EC124DD8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{182040B4-137B-4A8A-BA9F-AA0EC124DD8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{182040B4-137B-4A8A-BA9F-AA0EC124DD8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{182040B4-137B-4A8A-BA9F-AA0EC124DD8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{01015FAA-C14B-4E8B-BD37-002F5A65512D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01015FAA-C14B-4E8B-BD37-002F5A65512D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01015FAA-C14B-4E8B-BD37-002F5A65512D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01015FAA-C14B-4E8B-BD37-002F5A65512D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECDEBBF2-A55E-466D-9780-8C2BDE35B465}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECDEBBF2-A55E-466D-9780-8C2BDE35B465}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECDEBBF2-A55E-466D-9780-8C2BDE35B465}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECDEBBF2-A55E-466D-9780-8C2BDE35B465}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
