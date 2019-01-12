@@ -63,8 +63,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Data Providers\AerodromDataProvider.cs" />
+    <Compile Include="Data Providers\LetDataProvider.cs" />
     <Compile Include="Data Providers\UserDataProvider.cs" />
     <Compile Include="DataLayer.cs" />
+    <Compile Include="DTOs\LetDTOs.cs" />
     <Compile Include="Model\Admin.cs" />
     <Compile Include="Model\Aerodrom.cs" />
     <Compile Include="Model\Karta.cs" />

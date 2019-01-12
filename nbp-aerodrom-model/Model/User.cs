@@ -9,6 +9,8 @@ namespace nbp_aerodrom_model
     public class User
     {
         public String Id { get; set; }
+        public String Email { get; set; }
+        public String PassWord { get; set; }
         public String Ime { get; set; }
         public String Prezime { get; set; }
         public String BrojPasosa { get; set; }

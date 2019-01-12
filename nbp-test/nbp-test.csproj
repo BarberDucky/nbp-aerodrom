@@ -49,13 +49,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\nbp-aerodrom-model\nbp-aerodrom-model.csproj">
-      <Project>{01015faa-c14b-4e8b-bd37-002f5a65512d}</Project>
-      <Name>nbp-aerodrom-model</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\nbp-aerodrom\nbp-aerodrom.csproj">
-      <Project>{1d6c9c03-bcf6-4bce-88aa-9bb984d9ea4a}</Project>
-      <Name>nbp-aerodrom</Name>
+    <ProjectReference Include="..\nbp-autobus-data\nbp-autobus-data.csproj">
+      <Project>{933bd2a7-7d52-417f-b2e7-bb2a7b16a49e}</Project>
+      <Name>nbp-autobus-data</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
