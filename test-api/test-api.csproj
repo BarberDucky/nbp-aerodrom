@@ -198,6 +198,7 @@
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
     <Compile Include="Controllers\CarrierController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\ReservationController.cs" />
     <Compile Include="Controllers\ReviewController.cs" />
     <Compile Include="Controllers\RideController.cs" />
     <Compile Include="Controllers\StationController.cs" />

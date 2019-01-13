@@ -11,5 +11,8 @@ namespace nbp_autobus_data.BusinessModel
     {
         public Carrier Carrier { get; set; }
         public string UserId { get; set; }
+        public IEnumerable<Ride> Rides { get; set; }
+        public IEnumerable<Station> TakeOfStations { get; set; }
+        public IEnumerable<Station> ArrivalStations { get; set; }
     }
 }

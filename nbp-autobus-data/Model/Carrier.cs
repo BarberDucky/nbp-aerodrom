@@ -12,6 +12,7 @@ namespace nbp_autobus_data.Model
         public String Name { get; set; }
         public String Website { get; set; }
         public String PhoneNumber { get; set; }
+        public float AvgGrade { get; set; }
         public User User { get; set; }
         public List<Ride> Rides { get; set; }
     }

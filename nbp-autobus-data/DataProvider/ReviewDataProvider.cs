@@ -11,6 +11,7 @@ namespace nbp_autobus_data.DataProvider
 {
     public class ReviewDataProvider
     {
+       
         public static string InsertReview(CreateReviewDTO dto)
         {
             try
@@ -30,10 +31,16 @@ namespace nbp_autobus_data.DataProvider
                     .Return<Review>("review")
                     .Results;
 
-                if (query != null && query.Count() > 0)
+                if (query == null || query.Count() == 0)
+                    return null;
+
+                var succ = RedisDataProvider.RedisReviewDataProvider.InsertReview(newReview.Id, dto.CarrierId, dto.Grade);
+
+                if (succ)
                 {
                     return query.ToList()[0].Id;
                 }
+
                 return null;
 
             }
@@ -59,7 +66,7 @@ namespace nbp_autobus_data.DataProvider
 
                     }).Results;
 
-                if(query!=null && query.Count() > 0)
+                if (query != null && query.Count() > 0)
                 {
                     return new ReadReviewDTO(query.ToList()[0]);
                 }
@@ -78,7 +85,7 @@ namespace nbp_autobus_data.DataProvider
                 var query = DataLayer.Client.Cypher
                     .Match("(review :Review) - [: REVIEWED_BY] -> (user:User)",
                     "(review: Review) - [: REVIEW_FOR] -> (carrier:Carrier)")
-                    .Where((Carrier carrier)=>carrier.Id == carrierId)
+                    .Where((Carrier carrier) => carrier.Id == carrierId)
                     .Return((review, carrier, user) => new BusinessReview
                     {
                         Review = review.As<Review>(),
@@ -90,7 +97,7 @@ namespace nbp_autobus_data.DataProvider
                 return ReadReviewDTO.FromEntityList(query);
 
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 return new List<ReadReviewDTO>();
             }

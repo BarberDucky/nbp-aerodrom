@@ -55,6 +55,7 @@ namespace nbp_autobus_data.DataProvider
                 return null;
             }
         }
+
         #endregion
         public static string InsertCarrier(CarrierDTO dto)
         {
@@ -96,23 +97,26 @@ namespace nbp_autobus_data.DataProvider
             try
             {
                 var query = DataLayer.Client.Cypher
-                    .Match("(carrier: Carrier) - [: CREATED_BY] -> (user: User)")
+                    .Match("(carrier: Carrier) - [: CREATED_BY] -> (user: User)"
+                    , "(ride:Ride) - [: CARRIER] -> (carrier:Carrier)",
+                    "(r:Ride) < - [: TAKES_OF] - (takeOf:Station)",
+                    "(r:Ride) - [: ARRIVES] -> (arrival:Station)")
                     .Where((Carrier carrier) => carrier.Id == carrierId)
-                    .Return((carrier, user) => new
+                    .AndWhere((Ride ride, Ride r) => ride.Id == r.Id)
+                    .Return((carrier, user, ride, takeOf, arrival) => new BusinessCarrier
                     {
-                        C = carrier.As<Carrier>(),
-                        UserId = user.As<User>().Id
+                        Carrier = carrier.As<Carrier>(),
+                        UserId = user.As<User>().Id,
+                        Rides = ride.CollectAs<Ride>(),
+                        TakeOfStations = takeOf.CollectAs<Station>(),
+                        ArrivalStations = arrival.CollectAs<Station>()
                     })
                     .Results;
 
                 if (query != null && query.Count() > 0)
                 {
-                    var res = query.ToList()[0];
-                    CarrierDTO dto = new CarrierDTO(res.C)
-                    {
-                        UserId = res.UserId
-                    };
-                    return dto;
+                    var c = query.ToList()[0];
+                    return new CarrierDTO(c);
                 }
 
                 return null;
@@ -140,7 +144,7 @@ namespace nbp_autobus_data.DataProvider
                 var query = DataLayer.Client.Cypher
                     .Match("(carrier: Carrier)")
                     .Where((Carrier carrier) => carrier.Id == carrierdId)
-                   // .Set("carrier.Name = {Name}")
+                    // .Set("carrier.Name = {Name}")
                     .Set("carrier.PhoneNumber = {PhoneNumber}")
                     .Set("carrier.Website = {Website}")
                     .WithParams(queryDict)
@@ -163,21 +167,28 @@ namespace nbp_autobus_data.DataProvider
             try
             {
                 var query = DataLayer.Client.Cypher
-                    .Match("(carrier: Carrier)-[CREATED_BY]->(user: User)")
+                    .Match("(carrier: Carrier)-[CREATED_BY]->(user: User)",
+                    "(ride:Ride) - [: CARRIER] -> (c:Carrier)",
+                    "(r:Ride) < - [: TAKES_OF] - (takeOf:Station)",
+                    "(r:Ride) - [: ARRIVES] -> (arrival:Station)")
                     .Where((User user) => user.Id == userId)
-                    .Return<Carrier>("carrier")
+                    .AndWhere((Ride ride, Ride r) => r.Id == ride.Id)
+                    .AndWhere((Carrier carrier, Carrier c) => c.Id == carrier.Id)
+                    .Return((carrier, ride, takeOf, arrival, user) => new BusinessCarrier
+                    {
+                        Carrier = carrier.As<Carrier>(),
+                        UserId = user.As<User>().Id,
+                        Rides = ride.CollectAs<Ride>(),
+                        TakeOfStations = takeOf.CollectAs<Station>(),
+                        ArrivalStations = arrival.CollectAs<Station>()
+                    })
                     .Results;
 
-                //if (query != null && query.Count<Carrier>() > 0)
-                //{
-                //    return CarrierDTO.FromEntityList(query, userId);
-                //}
-                //return null;
-                return CarrierDTO.FromEntityList(query, userId);
+                return CarrierDTO.FromEntityList(query);
             }
             catch (Exception e)
             {
-                return null;
+                return new List<CarrierDTO>();
             }
         }
 
@@ -203,7 +214,7 @@ namespace nbp_autobus_data.DataProvider
             }
             catch (Exception e)
             {
-                return null;
+                return new List<CarrierDTO>();
             }
         }
 

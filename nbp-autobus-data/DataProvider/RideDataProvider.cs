@@ -1,6 +1,7 @@
 ﻿using nbp_autobus_data.BusinessModel;
 using nbp_autobus_data.DTOs;
 using nbp_autobus_data.Model;
+using nbp_autobus_data.RedisDataProvider;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -59,6 +60,7 @@ namespace nbp_autobus_data.DataProvider
                 if (query != null && query.Count() > 0)
                 {
                     var ride = query.ToList();
+                    RedisRideDataProvider.InsertRide(newRide.Id, newRide.NumberOfSeats);
                     return new ReadRideDTO(ride[0]);
                 }
                 return null;
@@ -128,7 +130,7 @@ namespace nbp_autobus_data.DataProvider
             }
             catch (Exception e)
             {
-                return null;
+                return new List<ReadRideDTO>();
             }
         }
 
