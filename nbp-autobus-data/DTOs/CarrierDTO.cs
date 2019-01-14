@@ -80,21 +80,7 @@ namespace nbp_autobus_data.DTOs
             return list;
         }
 
-        public static IEnumerable<CarrierDTO> FromEntityList(IEnumerable<Carrier> c, string userId)
-        {
-            List<CarrierDTO> list = new List<CarrierDTO>();
-            if (c != null && c.Count() > 0)
-            {
-                foreach (var el in c)
-                {
-                    list.Add(new CarrierDTO(el)
-                    {
-                        UserId = userId
-                    });
-                }
-            }
 
-            return list;
-        }
     }
 }
+ 

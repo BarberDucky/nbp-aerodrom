@@ -92,9 +92,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BusinessModel\BusinessCard.cs" />
     <Compile Include="BusinessModel\BusinessCarrier.cs" />
     <Compile Include="BusinessModel\BusinessReview.cs" />
     <Compile Include="BusinessModel\BusinessRide.cs" />
+    <Compile Include="BusinessModel\BusinessTrip.cs" />
     <Compile Include="DataLayers\DataLayer.cs" />
     <Compile Include="DataLayers\RedisDataLayer.cs" />
     <Compile Include="DataProvider\CarrierDataProvider.cs" />
@@ -106,6 +108,7 @@
     <Compile Include="DTOs\ReservationDTO.cs" />
     <Compile Include="DTOs\ReviewDTO.cs" />
     <Compile Include="DTOs\RideDTO.cs" />
+    <Compile Include="DTOs\SearchDTO.cs" />
     <Compile Include="DTOs\StationDTO.cs" />
     <Compile Include="DTOs\UserDTO.cs" />
     <Compile Include="Model\Card.cs" />
@@ -113,6 +116,7 @@
     <Compile Include="Model\Carrier.cs" />
     <Compile Include="Model\Review.cs" />
     <Compile Include="Model\Rezervation.cs" />
+    <Compile Include="Model\RideRelationship.cs" />
     <Compile Include="Model\Station.cs" />
     <Compile Include="Model\User.cs" />
     <Compile Include="Model\Ride.cs" />
@@ -120,6 +124,7 @@
     <Compile Include="RedisDataProvider\RedisReservationDataProvider.cs" />
     <Compile Include="RedisDataProvider\RedisReviewDataProvider.cs" />
     <Compile Include="RedisDataProvider\RedisRideDataProvider.cs" />
+    <Compile Include="RedisDataProvider\SearchRedisDataProvider.cs" />
     <Compile Include="RedisModel\RedisReservation.cs" />
   </ItemGroup>
   <ItemGroup>

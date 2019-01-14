@@ -102,6 +102,7 @@ namespace nbp_autobus_data.DTOs
         public DateTime TakeOfTime { get; set; }
         public DateTime ArrivalTime { get; set; }
         public DayOfWeek DayOfWeek { get; set; }
+        public String CarrierId { get; set; }
 
         public static Ride FromDTO(UpdateRideDTO dto)
         {

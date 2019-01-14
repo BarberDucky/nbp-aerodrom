@@ -1,4 +1,5 @@
-﻿using nbp_autobus_data.DataProvider;
+﻿using nbp_autobus_data.BusinessModel;
+using nbp_autobus_data.DataProvider;
 using nbp_autobus_data.DTOs;
 using System;
 using System.Collections.Generic;
@@ -36,6 +37,13 @@ namespace test_api.Controllers
         public ReadRideDTO Post([FromBody]CreateRideDTO value)
         {
             return RideDataProvider.InsertRide(value);
+        }
+
+        [HttpPost]
+        [Route("api/Ride/FindPath")]
+        public IEnumerable<BusinessTrip> FindPath([FromBody]SearchDTO value)
+        {
+            return RideDataProvider.FindPath(value);
         }
 
         // PUT: api/Ride/5

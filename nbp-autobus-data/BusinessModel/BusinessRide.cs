@@ -14,4 +14,11 @@ namespace nbp_autobus_data.BusinessModel
         public Station TakeOfStation { get; set; }
         public Station ArrivalStation { get; set; }
     }
+
+    public class BusinessRideRelationship
+    {
+        public IEnumerable<RideRelationship> Rides { get; set; }
+        public IEnumerable<Station> Stations { get; set; }
+    }
+
 }
