@@ -10,6 +10,7 @@ namespace nbp_autobus_data.BusinessModel
     public class BusinessRide
     {
         public Ride Ride { get; set; }
+        public DateTime TakeOfDate { get; set; }
         public Carrier Carrier { get; set; }
         public Station TakeOfStation { get; set; }
         public Station ArrivalStation { get; set; }

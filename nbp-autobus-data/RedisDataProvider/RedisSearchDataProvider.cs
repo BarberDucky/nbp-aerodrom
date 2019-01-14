@@ -1,6 +1,7 @@
 ﻿using nbp_autobus_data.BusinessModel;
 using nbp_autobus_data.DataLayers;
 using nbp_autobus_data.DTOs;
+using nbp_autobus_data.RedisModel;
 using Newtonsoft.Json;
 using ServiceStack.Redis;
 using System;
@@ -18,8 +19,9 @@ namespace nbp_autobus_data.RedisDataProvider
         {
             using (var client = new RedisClient(RedisDataLayer.SingleHost))
             {
-                TimeSpan expire = new TimeSpan(0, 1, 0);
-                var searchKey = JsonConvert.SerializeObject(search);
+                TimeSpan expire = new TimeSpan(0, 10, 0);
+                RedisSearch s = SearchDTO.FromDTO(search);
+                var searchKey = JsonConvert.SerializeObject(s);
                 client.Set<List<BusinessTrip>>(searchKey, searchResult, expire);
 
             }
@@ -30,7 +32,8 @@ namespace nbp_autobus_data.RedisDataProvider
         {
             using (var client = new RedisClient(RedisDataLayer.SingleHost))
             {
-                var searchKey = JsonConvert.SerializeObject(search);
+                RedisSearch s = SearchDTO.FromDTO(search);
+                var searchKey = JsonConvert.SerializeObject(s);
                 var result = client.Get<List<BusinessTrip>>(searchKey);
                 return result;
             }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using nbp_autobus_data.Model;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,13 +9,16 @@ namespace nbp_autobus_data.BusinessModel
 {
     public class BusinessCard
     {
-        public float Price { get; set; }
+        public Card Card { get; set; }
         public List<BusinessRide> Rides { get; set; }
         public string CarrierId { get; set; }
 
         public BusinessCard()
         {
-            Price = 0;
+            Card = new Card()
+            {
+                Price = 0
+            };
             Rides = new List<BusinessRide>();
         }
     }

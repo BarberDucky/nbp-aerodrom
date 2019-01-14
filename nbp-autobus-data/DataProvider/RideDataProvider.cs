@@ -181,6 +181,8 @@ namespace nbp_autobus_data.DataProvider
                     .Where((Ride ride) => ride.Id == id)
                     .AndWhere((Ride r) => r.Id == id)
                     .Delete("ride, t, a, c, r").ExecuteWithoutResults();
+
+                RedisDataProvider.RedisRideDataProvider.DeleteRide(id);
                 return true;
             }
             catch (Exception e)
@@ -208,9 +210,9 @@ namespace nbp_autobus_data.DataProvider
                     .AndWhere("all (index in range(0, size(ride) -2)" +
                     " where ( (ride[index]).ArrivalTime <= (ride[index+1]).TakeOfTime and (ride[index]).DayOfWeek = (ride[index]).DayOfWeek ) " +
                     "or (ride[index]).DayOfWeek <> (ride[index]).DayOfWeek )")
-                    .AndWhere("all (index in range(0, size(ride) -2)" +
-                    " where ( (ride[index]).ArrivalTime < (ride[index+1]).TakeOfTime and (ride[index]).DayOfWeek = (ride[index]).DayOfWeek ) " +
-                    "or (ride[index]).DayOfWeek <> (ride[index]).DayOfWeek )")
+                    //.AndWhere("all (index in range(0, size(ride) -2)" +
+                    //" where ( (ride[index]).ArrivalTime < (ride[index+1]).TakeOfTime and (ride[index]).DayOfWeek = (ride[index]).DayOfWeek ) " +
+                    //"or (ride[index]).DayOfWeek <> (ride[index]).DayOfWeek )")
                     //  .Return<IEnumerable<RideRelationship>>("relationships (p)")
                     .Return(() => new BusinessRideRelationship
                     {
@@ -220,9 +222,12 @@ namespace nbp_autobus_data.DataProvider
                     .Results;
 
                 var valid = CheckIfPathInRange(query, search);
+
                 //check da li ima mesta
-                //group po prevozniku
-                var result = GetSearchResults(valid);
+
+                var checkNumSeats = RedisReservationDataProvider.CheckNumberOfSeats(valid, search);
+
+                var result = GetSearchResults(checkNumSeats, search.TakeOfDate);
 
                 RedisSearchDataProvider.CacheSearch(search, result.ToList());
 
@@ -260,18 +265,18 @@ namespace nbp_autobus_data.DataProvider
             return list;
         }
 
-        private static IEnumerable<BusinessTrip> GetSearchResults(IEnumerable<BusinessRideRelationship> rides)
+        private static IEnumerable<BusinessTrip> GetSearchResults(IEnumerable<BusinessRideRelationship> rides, DateTime TakeOfDate)
         {
             List<BusinessTrip> results = new List<BusinessTrip>();
 
             foreach (var path in rides)
             {
-                results.Add(GroupByCarrier(path));
+                results.Add(GroupByCarrier(path, TakeOfDate));
             }
             return results;
         }
 
-        private static BusinessTrip GroupByCarrier(BusinessRideRelationship rides)
+        private static BusinessTrip GroupByCarrier(BusinessRideRelationship rides, DateTime TakeOfDate)
         {
             int start = 0;
             BusinessTrip trip = new BusinessTrip();
@@ -279,19 +284,23 @@ namespace nbp_autobus_data.DataProvider
             while (start < rides.Rides.Count())
             {
                 var currentCarrier = rides.Rides.ToList()[start].CarrierId;
-                BusinessCard card = new BusinessCard
+                var rideDay = rides.Rides.ToList()[start].DayOfWeek;
+                BusinessCard card = new BusinessCard()
                 {
                     CarrierId = currentCarrier
                 };
+                card.Card.TakeOfDate = TakeOfDate.AddDays((rideDay - TakeOfDate.DayOfWeek + 7) % 7);
 
                 while (start < rides.Rides.Count() && rides.Rides.ToList()[start].CarrierId == currentCarrier)
                 {
-                    card.Price += rides.Rides.ToList()[start].RidePrice;
+                    card.Card.Price += rides.Rides.ToList()[start].RidePrice;
                     trip.TotalCost += rides.Rides.ToList()[start].RidePrice;
                     Ride ride = new Ride(rides.Rides.ToList()[start]);
+                    var rDay = ride.DayOfWeek;
                     card.Rides.Add(new BusinessRide()
                     {
                         Ride = ride,
+                        TakeOfDate = TakeOfDate.AddDays((rDay - TakeOfDate.DayOfWeek + 7) % 7),
                         TakeOfStation = rides.Stations.ToList()[start],
                         ArrivalStation = rides.Stations.ToList()[start + 1]
                     });

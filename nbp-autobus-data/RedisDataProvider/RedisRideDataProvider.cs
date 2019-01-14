@@ -70,5 +70,23 @@ namespace nbp_autobus_data.RedisDataProvider
                 return -1;
             }
         }
+
+        public static bool DeleteRide(string rideId)
+        {
+            try
+            {
+
+                using (var client = new RedisClient(RedisDataLayer.SingleHost))
+                {
+                    return client.Remove(GetRideId(rideId));
+                }
+
+
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+        }
     }
 }
