@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using nbp_autobus_data.BusinessModel;
+using nbp_autobus_data.Model;
 using nbp_autobus_data.RedisModel;
 
 namespace nbp_autobus_data.DTOs
@@ -19,6 +20,7 @@ namespace nbp_autobus_data.DTOs
         public DateTime TakeOfDateRoundAbout { get; set; }
         public DateTime ArrivalDateRoundAbout { get; set; }
         public float MaxCardPrice { get; set; }
+        public List<RideType> RideTypes { get; set; }
 
         public static RedisSearch FromDTO(SearchDTO search)
         {

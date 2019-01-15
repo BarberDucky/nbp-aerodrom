@@ -1,4 +1,5 @@
 ﻿using nbp_autobus_data.DTOs;
+using nbp_autobus_data.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,7 @@ namespace nbp_autobus_data.RedisModel
         public DateTime ArrivalDate { get; set; }
         public int NumberOfCards { get; set; }
         public float MaxCardPrice { get; set; }
+        public List<RideType> RideTypes { get; set; }
 
 
         public RedisSearch()
@@ -29,6 +31,7 @@ namespace nbp_autobus_data.RedisModel
             ArrivalDate = dto.ArrivalDate;
             NumberOfCards = dto.NumberOfCards;
             MaxCardPrice = dto.MaxCardPrice;
+            RideTypes = dto.RideTypes;
         }
     }
 }

@@ -334,7 +334,8 @@ namespace nbp_autobus_data.DataProvider
                 var rideDay = rides.Rides.ToList()[start].DayOfWeek;
                 BusinessCard card = new BusinessCard()
                 {
-                    CarrierId = currentCarrier
+                    CarrierId = currentCarrier,
+                    TakeOfStation = rides.Stations.ToList()[start]
                 };
                 card.Card.TakeOfDate = TakeOfDate.AddDays((rideDay - TakeOfDate.DayOfWeek + 7) % 7);
 
@@ -354,7 +355,7 @@ namespace nbp_autobus_data.DataProvider
 
                     start++;
                 }
-
+                card.ArrivalStation = rides.Stations.ToList()[start];
                 trip.CardsInTrip.Add(card);
                 trip.OverlayNumber++;
 
@@ -374,6 +375,13 @@ namespace nbp_autobus_data.DataProvider
                 var maxPrice = search.MaxCardPrice;
                 if (maxPrice == 0)
                     maxPrice = float.MaxValue;
+                RideType[] rideTypes = search.RideTypes.ToArray();
+                if(search.RideTypes.Count == 0)
+                {
+                    rideTypes[0] = RideType.Bus;
+                    rideTypes[1] = RideType.Car;
+                    rideTypes[2] = RideType.MiniBus;
+                }
 
                 var query = DataLayer.Client.Cypher
                     .Match("p = (takeOf: Station) - [ride: RIDE *..15]->(arrive: Station)")
@@ -387,6 +395,8 @@ namespace nbp_autobus_data.DataProvider
                     .AndWhere("reduce (s = 0, r in relationships(p) | " +
                     " s + r.RidePrice) < {maxPrice} ")
                     .WithParam("maxPrice", maxPrice)
+                    .AndWhere("all (r in relationships(p) where r.RideType in {rideTypes})")
+                    .WithParam("rideTypes", rideTypes)
                     .Return(() => new BusinessRideRelationship
                     {
                         Rides = Return.As<IEnumerable<RideRelationship>>("relationships (p)"),

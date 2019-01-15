@@ -24,9 +24,13 @@ namespace nbp_autobus_data.DataProvider
                     .Create("(card : Card {newCard})")
                     .WithParam("newCard", newCard)
                     .With("card")
-                    .Match("(user: User)")
+                    .Match("(user: User)", "(takeOf: Station)", "(arrival: Station)")
                     .Where((User user) => user.Id == userId)
+                    .AndWhere((Station takeOf) => takeOf.Id == card.TakeOfStation.Id)
+                    .AndWhere((Station arrival) => arrival.Id == card.ArrivalStation.Id)
                     .Create("(card) - [: CARD_BOUGHT] -> (user)")
+                    .Create("(card) - [: CARD_ARRIVES_AT]->(arrival)")
+                    .Create("(card) - [: CARD_TAKES_OF] -> (takeOf)")
                     .Return<Card>("card")
                     .Results;
                 if (query != null)
@@ -60,7 +64,7 @@ namespace nbp_autobus_data.DataProvider
             {
                 if (!RedisDataProvider.RedisReservationDataProvider.AddCards(trip, numSeats))
                     return false;
-                for(int i = 0; i < numSeats; i++)
+                for (int i = 0; i < numSeats; i++)
                 {
                     foreach (var card in trip.CardsInTrip)
                     {
@@ -75,7 +79,7 @@ namespace nbp_autobus_data.DataProvider
             {
                 return false;
             }
-            
+
         }
 
         public static IEnumerable<CardDTO> GetAllCardsOfUser(string userId)
@@ -83,9 +87,17 @@ namespace nbp_autobus_data.DataProvider
             try
             {
                 var query = DataLayer.Client.Cypher
-                    .Match("(card: Card) - [: CARD_BOUGHT] -> (user: User)")
+                    .Match("(card: Card) - [: CARD_BOUGHT] -> (user: User)",
+                    "(card:Card) - [: CARD_ARRIVES_AT]->(arrival:Station)",
+                    "(card:Card) - [: CARD_TAKES_OF] -> (takeOf:Station)")
                     .Where((User user) => user.Id == userId)
-                    .Return<Card>("card")
+                    .Return((card, arrival, takeOf) => new BusinessCard()
+                    {
+                        Card = card.As<Card>(),
+                        ArrivalStation = arrival.As<Station>(),
+                        TakeOfStation = takeOf.As<Station>()
+
+                    })
                     .Results;
 
                 return CardDTO.FromEntityList(query);
@@ -101,7 +113,7 @@ namespace nbp_autobus_data.DataProvider
             try
             {
                 var query = DataLayer.Client.Cypher
-                    .Match("(c:Card) - [: OF_RIDE] -> (ride:Ride)", 
+                    .Match("(c:Card) - [: OF_RIDE] -> (ride:Ride)",
                     "(ride: Ride)-[: ARRIVES ]->(arrive : Station)",
                     "(ride: Ride)<-[: TAKES_OF ]- (takeOf : Station)",
                     "(ride:Ride) - [: CARRIER] -> (carrier: Carrier)")

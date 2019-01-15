@@ -33,7 +33,7 @@ namespace nbp_autobus_data
         {
             try
             {
-                client = new GraphClient(new Uri("http://localhost:7474/db/data"), "neo4j", "milica");
+                client = new GraphClient(new Uri("http://localhost:7474/db/data"), "neo4j", "asdasdasd");
                 client.Connect();
                 return client;
             }

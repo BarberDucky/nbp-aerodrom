@@ -21,7 +21,12 @@ namespace test_api.Controllers
             return CarrierDataProvider.GetCarrierByUser(userId);
         }
 
-
+        [HttpGet]
+        [Route("api/Carrier/GetCarrierByName/{carrierName}")]
+        public IEnumerable<CarrierDTO> GetCarriersByName(string carrierName)
+        {
+            return CarrierDataProvider.GetCarriersByName(carrierName);
+        }
 
         // GET: api/Carrier/5
         public CarrierDTO Get(string id)

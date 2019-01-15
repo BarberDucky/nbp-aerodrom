@@ -174,7 +174,7 @@ namespace nbp_autobus_data.DataProvider
                     .OptionalMatch("(ride:Ride) - [: CARRIER] -> (c:Carrier)")
                     .Where((Carrier carrier, Carrier c) => c.Id == carrier.Id)
                     .OptionalMatch("(arrival:Station) <-[: ARRIVES] -(r: Ride) < - [: TAKES_OF] -(takeOf: Station)")
-                   // .OptionalMatch("(r: Ride) - [: ARRIVES] -> ")
+                    // .OptionalMatch("(r: Ride) - [: ARRIVES] -> ")
                     .Where((Ride ride, Ride r) => r.Id == ride.Id)
                     .Return((carrier, ride, takeOf, arrival, user) => new BusinessCarrier
                     {
@@ -212,6 +212,36 @@ namespace nbp_autobus_data.DataProvider
                 //    return CarrierDTO.FromEntityList(query);
                 //}
                 //return null;
+                return CarrierDTO.FromEntityList(query);
+            }
+            catch (Exception e)
+            {
+                return new List<CarrierDTO>();
+            }
+        }
+
+        public static IEnumerable<CarrierDTO> GetCarriersByName(string carrierName)
+        {
+            try
+            {
+                var query = DataLayer.Client.Cypher
+                    .Match("(carrier: Carrier)-[CREATED_BY]->(user: User)")
+                    .Where((Carrier carrier) => carrier.Name.Contains(carrierName))
+                    .OptionalMatch("(ride:Ride) - [: CARRIER] -> (c:Carrier)")
+                    .Where((Carrier carrier, Carrier c) => c.Id == carrier.Id)
+                    .OptionalMatch("(arrival:Station) <-[: ARRIVES] -(r: Ride) < - [: TAKES_OF] -(takeOf: Station)")
+                    // .OptionalMatch("(r: Ride) - [: ARRIVES] -> ")
+                    .Where((Ride ride, Ride r) => r.Id == ride.Id)
+                    .Return((carrier, ride, takeOf, arrival, user) => new BusinessCarrier
+                    {
+                        Carrier = carrier.As<Carrier>(),
+                        UserId = user.As<User>().Id,
+                        Rides = ride.CollectAs<Ride>(),
+                        TakeOfStations = takeOf.CollectAs<Station>(),
+                        ArrivalStations = arrival.CollectAs<Station>()
+                    })
+                    .Results;
+
                 return CarrierDTO.FromEntityList(query);
             }
             catch (Exception e)
