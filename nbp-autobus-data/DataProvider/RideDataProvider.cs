@@ -371,9 +371,12 @@ namespace nbp_autobus_data.DataProvider
                     return cachedResult;
 
                 var takeOfDay = search.TakeOfDate.DayOfWeek;
+                var maxPrice = search.MaxCardPrice;
+                if (maxPrice == 0)
+                    maxPrice = float.MaxValue;
 
                 var query = DataLayer.Client.Cypher
-                    .Match("p = (takeOf: Station) - [ride: RIDE *..5]->(arrive: Station)")
+                    .Match("p = (takeOf: Station) - [ride: RIDE *..15]->(arrive: Station)")
                     .Where((Station takeOf) => takeOf.Id == search.TakeOfStationId)
                     .AndWhere((Station arrive) => arrive.Id == search.ArrivalStationId)
                     .AndWhere("(ride[0]).DayOfWeek = {takeOfDay} ")
@@ -381,10 +384,9 @@ namespace nbp_autobus_data.DataProvider
                     .AndWhere("all (index in range(0, size(ride) -2)" +
                     " where ( (ride[index]).ArrivalTime <= (ride[index+1]).TakeOfTime and (ride[index]).DayOfWeek = (ride[index]).DayOfWeek ) " +
                     "or (ride[index]).DayOfWeek <> (ride[index]).DayOfWeek )")
-                    //.AndWhere("all (index in range(0, size(ride) -2)" +
-                    //" where ( (ride[index]).ArrivalTime < (ride[index+1]).TakeOfTime and (ride[index]).DayOfWeek = (ride[index]).DayOfWeek ) " +
-                    //"or (ride[index]).DayOfWeek <> (ride[index]).DayOfWeek )")
-                    //  .Return<IEnumerable<RideRelationship>>("relationships (p)")
+                    .AndWhere("reduce (s = 0, r in relationships(p) | " +
+                    " s + r.RidePrice) < {maxPrice} ")
+                    .WithParam("maxPrice", maxPrice)
                     .Return(() => new BusinessRideRelationship
                     {
                         Rides = Return.As<IEnumerable<RideRelationship>>("relationships (p)"),

@@ -18,6 +18,7 @@ namespace nbp_autobus_data.DTOs
         public bool IsRoundAbout { get; set; }
         public DateTime TakeOfDateRoundAbout { get; set; }
         public DateTime ArrivalDateRoundAbout { get; set; }
+        public float MaxCardPrice { get; set; }
 
         public static RedisSearch FromDTO(SearchDTO search)
         {

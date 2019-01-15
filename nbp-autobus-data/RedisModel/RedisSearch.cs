@@ -14,6 +14,7 @@ namespace nbp_autobus_data.RedisModel
         public DateTime TakeOfDate { get; set; }
         public DateTime ArrivalDate { get; set; }
         public int NumberOfCards { get; set; }
+        public float MaxCardPrice { get; set; }
 
 
         public RedisSearch()
@@ -27,6 +28,7 @@ namespace nbp_autobus_data.RedisModel
             TakeOfDate = dto.TakeOfDate;
             ArrivalDate = dto.ArrivalDate;
             NumberOfCards = dto.NumberOfCards;
+            MaxCardPrice = dto.MaxCardPrice;
         }
     }
 }
