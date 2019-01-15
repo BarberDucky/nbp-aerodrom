@@ -24,7 +24,7 @@ namespace nbp_autobus_data.DataProvider
                     .Create("(card : Card {newCard})")
                     .WithParam("newCard", newCard)
                     .With("card")
-                    .Match("(user: User),(carrier: Carrier)")
+                    .Match("(user: User)")
                     .Where((User user) => user.Id == userId)
                     .Create("(card) - [: CARD_BOUGHT] -> (user)")
                     .Return<Card>("card")

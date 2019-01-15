@@ -15,25 +15,25 @@ namespace nbp_autobus_data.RedisDataProvider
     public class RedisSearchDataProvider
     {
 
-        public static void CacheSearch(SearchDTO search, List<BusinessTrip> searchResult)
+        public static void CacheSearch(RedisSearch search, List<BusinessTrip> searchResult)
         {
             using (var client = new RedisClient(RedisDataLayer.SingleHost))
             {
                 TimeSpan expire = new TimeSpan(0, 10, 0);
-                RedisSearch s = SearchDTO.FromDTO(search);
-                var searchKey = JsonConvert.SerializeObject(s);
+                //RedisSearch s = SearchDTO.FromDTO(search);
+                var searchKey = JsonConvert.SerializeObject(search);
                 client.Set<List<BusinessTrip>>(searchKey, searchResult, expire);
 
             }
 
         }
 
-        public static List<BusinessTrip> GetCachedSearch(SearchDTO search)
+        public static List<BusinessTrip> GetCachedSearch(RedisSearch search)
         {
             using (var client = new RedisClient(RedisDataLayer.SingleHost))
             {
-                RedisSearch s = SearchDTO.FromDTO(search);
-                var searchKey = JsonConvert.SerializeObject(s);
+               // RedisSearch s = SearchDTO.FromDTO(search);
+                var searchKey = JsonConvert.SerializeObject(search);
                 var result = client.Get<List<BusinessTrip>>(searchKey);
                 return result;
             }

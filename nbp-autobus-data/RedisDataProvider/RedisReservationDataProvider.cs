@@ -119,7 +119,7 @@ namespace nbp_autobus_data.RedisDataProvider
             }
         }
 
-        public static IEnumerable<BusinessRideRelationship> CheckNumberOfSeats(IEnumerable<BusinessRideRelationship> paths, SearchDTO search)
+        public static IEnumerable<BusinessRideRelationship> CheckNumberOfSeats(IEnumerable<BusinessRideRelationship> paths, RedisSearch search)
         {
             var takeOfDate = search.TakeOfDate.Date;
             List<BusinessRideRelationship> list = new List<BusinessRideRelationship>();

@@ -15,6 +15,7 @@ namespace nbp_autobus_data.RedisModel
         public DateTime ArrivalDate { get; set; }
         public int NumberOfCards { get; set; }
 
+
         public RedisSearch()
         {
         }

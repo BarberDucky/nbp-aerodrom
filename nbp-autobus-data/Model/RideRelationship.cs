@@ -13,6 +13,7 @@ namespace nbp_autobus_data.Model
         public DateTime TakeOfTime { get; set; }
         public DateTime ArrivalTime { get; set; }
         public DayOfWeek DayOfWeek { get; set; }
+        public RideType RideType { get; set; }
       
         public String CarrierId { get; set; }
 
@@ -29,6 +30,7 @@ namespace nbp_autobus_data.Model
             ArrivalTime = ride.ArrivalTime;
             DayOfWeek = ride.DayOfWeek;
             CarrierId = carrierId;
+            RideType = ride.RideType;
            
         }
     }

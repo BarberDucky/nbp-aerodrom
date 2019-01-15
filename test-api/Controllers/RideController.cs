@@ -41,7 +41,7 @@ namespace test_api.Controllers
 
         [HttpPost]
         [Route("api/Ride/FindPath")]
-        public IEnumerable<BusinessTrip> FindPath([FromBody]SearchDTO value)
+        public SearchResultsDTO FindPath([FromBody]SearchDTO value)
         {
             return RideDataProvider.FindPath(value);
         }

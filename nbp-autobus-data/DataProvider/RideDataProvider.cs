@@ -2,6 +2,7 @@
 using nbp_autobus_data.DTOs;
 using nbp_autobus_data.Model;
 using nbp_autobus_data.RedisDataProvider;
+using nbp_autobus_data.RedisModel;
 using Neo4jClient.Cypher;
 using System;
 using System.Collections.Generic;
@@ -145,21 +146,37 @@ namespace nbp_autobus_data.DataProvider
                 Ride r = UpdateRideDTO.FromDTO(dto);
                 r.Id = id;
 
-                RideRelationship rideRel = new RideRelationship(r, dto.CarrierId);
+                //RideRelationship rideRel = new RideRelationship(r);
+                Dictionary<string, object> queryDict = new Dictionary<string, object>
+                {
+                    { "RidePrice", dto.RidePrice },
+                    { "RideType", dto.RideType },
+                    { "TakeOfTime", r.TakeOfTime },
+                    { "ArrivalTime", r.ArrivalTime },
+                    { "DayOfWeek", dto.DayOfWeek }
+                };
 
                 var query = DataLayer.Client.Cypher
                     .Match("(ride:Ride)", "(takeOf:Station) - [rel: RIDE] -> (arrival:Station)")
                     .Where((Ride ride) => ride.Id == id)
                     .AndWhere((Ride rel) => rel.Id == id)
                     .Set("ride = {newRide}")
-                    .Set("rel = {rideRel}")
                     .WithParam("newRide", r)
-                    .WithParam("rideRel", rideRel)
+                    .Set("rel.RidePrice = {RidePrice}")
+                    .Set("rel.RideType = {RideType}")
+                    .Set("rel.TakeOfTime = {TakeOfTime}")
+                    .Set("rel.ArrivalTime = {ArrivalTime}")
+                    .Set("rel.DayOfWeek = {DayOfWeek}")
+                    .WithParams(queryDict)
                     .Return<Ride>("ride")
                     .Results;
 
                 if (query != null && query.Count() > 0)
+                {
+                    RedisDataProvider.RedisRideDataProvider.UpdateRide(id, dto.NumberOfSeats);
                     return true;
+                }
+
                 return false;
 
             }
@@ -191,55 +208,85 @@ namespace nbp_autobus_data.DataProvider
             }
         }
 
-        public static IEnumerable<BusinessTrip> FindPath(SearchDTO search)
+        public static SearchResultsDTO FindPath(SearchDTO search)
         {
             try
             {
-                var cachedResult = RedisSearchDataProvider.GetCachedSearch(search);
-                if (cachedResult != null)
-                    return cachedResult;
+                var result = new SearchResultsDTO();
+                if (search.IsRoundAbout)
+                {
+                    var oneWaySearch = SearchDTO.FromDTO(search);
 
-                var takeOfDay = search.TakeOfDate.DayOfWeek;
-
-                var query = DataLayer.Client.Cypher
-                    .Match("p = (takeOf: Station) - [ride: RIDE *..5]->(arrive: Station)")
-                    .Where((Station takeOf) => takeOf.Id == search.TakeOfStationId)
-                    .AndWhere((Station arrive) => arrive.Id == search.ArrivalStationId)
-                    .AndWhere("(ride[0]).DayOfWeek = {takeOfDay} ")
-                    .WithParam("takeOfDay", takeOfDay)
-                    .AndWhere("all (index in range(0, size(ride) -2)" +
-                    " where ( (ride[index]).ArrivalTime <= (ride[index+1]).TakeOfTime and (ride[index]).DayOfWeek = (ride[index]).DayOfWeek ) " +
-                    "or (ride[index]).DayOfWeek <> (ride[index]).DayOfWeek )")
-                    //.AndWhere("all (index in range(0, size(ride) -2)" +
-                    //" where ( (ride[index]).ArrivalTime < (ride[index+1]).TakeOfTime and (ride[index]).DayOfWeek = (ride[index]).DayOfWeek ) " +
-                    //"or (ride[index]).DayOfWeek <> (ride[index]).DayOfWeek )")
-                    //  .Return<IEnumerable<RideRelationship>>("relationships (p)")
-                    .Return(() => new BusinessRideRelationship
+                    var roundWaySearch = new RedisSearch()
                     {
-                        Rides = Return.As<IEnumerable<RideRelationship>>("relationships (p)"),
-                        Stations = Return.As<IEnumerable<Station>>("nodes (p)"),
-                    })
-                    .Results;
+                        NumberOfCards = search.NumberOfCards,
+                        ArrivalStationId = search.TakeOfStationId,
+                        TakeOfStationId = search.ArrivalStationId,
+                        TakeOfDate = search.TakeOfDateRoundAbout,
+                        ArrivalDate = search.ArrivalDateRoundAbout
+                    };
 
-                var valid = CheckIfPathInRange(query, search);
+                    var resultOneWay = GetTripsInPath(oneWaySearch);
+                    var resultRoundWay = GetTripsInPath(roundWaySearch);
 
-                //check da li ima mesta
+                    result.OneWayTrip = resultOneWay;
+                    result.RoundAboutTrip = resultRoundWay;
+                }
+                else
+                {
+                    var oneWaySearch = SearchDTO.FromDTO(search);
+                    var resultOneWay = GetTripsInPath(oneWaySearch);
 
-                var checkNumSeats = RedisReservationDataProvider.CheckNumberOfSeats(valid, search);
+                    result.OneWayTrip = resultOneWay;
+                }
+                //var cachedResult = RedisSearchDataProvider.GetCachedSearch(search);
+                //if (cachedResult != null)
+                //    return cachedResult;
 
-                var result = GetSearchResults(checkNumSeats, search.TakeOfDate);
+                //var takeOfDay = search.TakeOfDate.DayOfWeek;
 
-                RedisSearchDataProvider.CacheSearch(search, result.ToList());
+                //var query = DataLayer.Client.Cypher
+                //    .Match("p = (takeOf: Station) - [ride: RIDE *..5]->(arrive: Station)")
+                //    .Where((Station takeOf) => takeOf.Id == search.TakeOfStationId)
+                //    .AndWhere((Station arrive) => arrive.Id == search.ArrivalStationId)
+                //    .AndWhere("(ride[0]).DayOfWeek = {takeOfDay} ")
+                //    .WithParam("takeOfDay", takeOfDay)
+                //    .AndWhere("all (index in range(0, size(ride) -2)" +
+                //    " where ( (ride[index]).ArrivalTime <= (ride[index+1]).TakeOfTime and (ride[index]).DayOfWeek = (ride[index]).DayOfWeek ) " +
+                //    "or (ride[index]).DayOfWeek <> (ride[index]).DayOfWeek )")
+                //    //.AndWhere("all (index in range(0, size(ride) -2)" +
+                //    //" where ( (ride[index]).ArrivalTime < (ride[index+1]).TakeOfTime and (ride[index]).DayOfWeek = (ride[index]).DayOfWeek ) " +
+                //    //"or (ride[index]).DayOfWeek <> (ride[index]).DayOfWeek )")
+                //    //  .Return<IEnumerable<RideRelationship>>("relationships (p)")
+                //    .Return(() => new BusinessRideRelationship
+                //    {
+                //        Rides = Return.As<IEnumerable<RideRelationship>>("relationships (p)"),
+                //        Stations = Return.As<IEnumerable<Station>>("nodes (p)"),
+                //    })
+                //    .Results;
 
+                //var valid = CheckIfPathInRange(query, search);
+
+                ////check da li ima mesta
+
+                //var checkNumSeats = RedisReservationDataProvider.CheckNumberOfSeats(valid, search);
+
+                //var result = GetSearchResults(checkNumSeats, search.TakeOfDate);
+
+                //RedisSearchDataProvider.CacheSearch(search, result.ToList());
+
+                //return result;
                 return result;
+
+
             }
             catch (Exception e)
             {
-                return new List<BusinessTrip>();
+                return new SearchResultsDTO();
             }
         }
 
-        private static IEnumerable<BusinessRideRelationship> CheckIfPathInRange(IEnumerable<BusinessRideRelationship> paths, SearchDTO search)
+        private static IEnumerable<BusinessRideRelationship> CheckIfPathInRange(IEnumerable<BusinessRideRelationship> paths, RedisSearch search)
         {
             List<BusinessRideRelationship> list = new List<BusinessRideRelationship>();
             DateTime arrivalDate = search.ArrivalDate.Date;
@@ -313,6 +360,55 @@ namespace nbp_autobus_data.DataProvider
 
             }
             return trip;
+        }
+
+        private static IEnumerable<BusinessTrip> GetTripsInPath(RedisSearch search)
+        {
+            try
+            {
+                var cachedResult = RedisSearchDataProvider.GetCachedSearch(search);
+                if (cachedResult != null)
+                    return cachedResult;
+
+                var takeOfDay = search.TakeOfDate.DayOfWeek;
+
+                var query = DataLayer.Client.Cypher
+                    .Match("p = (takeOf: Station) - [ride: RIDE *..5]->(arrive: Station)")
+                    .Where((Station takeOf) => takeOf.Id == search.TakeOfStationId)
+                    .AndWhere((Station arrive) => arrive.Id == search.ArrivalStationId)
+                    .AndWhere("(ride[0]).DayOfWeek = {takeOfDay} ")
+                    .WithParam("takeOfDay", takeOfDay)
+                    .AndWhere("all (index in range(0, size(ride) -2)" +
+                    " where ( (ride[index]).ArrivalTime <= (ride[index+1]).TakeOfTime and (ride[index]).DayOfWeek = (ride[index]).DayOfWeek ) " +
+                    "or (ride[index]).DayOfWeek <> (ride[index]).DayOfWeek )")
+                    //.AndWhere("all (index in range(0, size(ride) -2)" +
+                    //" where ( (ride[index]).ArrivalTime < (ride[index+1]).TakeOfTime and (ride[index]).DayOfWeek = (ride[index]).DayOfWeek ) " +
+                    //"or (ride[index]).DayOfWeek <> (ride[index]).DayOfWeek )")
+                    //  .Return<IEnumerable<RideRelationship>>("relationships (p)")
+                    .Return(() => new BusinessRideRelationship
+                    {
+                        Rides = Return.As<IEnumerable<RideRelationship>>("relationships (p)"),
+                        Stations = Return.As<IEnumerable<Station>>("nodes (p)"),
+                    })
+                    .Results;
+
+                var valid = CheckIfPathInRange(query, search);
+
+                //check da li ima mesta
+
+                var checkNumSeats = RedisReservationDataProvider.CheckNumberOfSeats(valid, search);
+
+                var result = GetSearchResults(checkNumSeats, search.TakeOfDate);
+
+                RedisSearchDataProvider.CacheSearch(search, result.ToList());
+
+                return result;
+            }
+            catch (Exception e)
+            {
+                return new List<BusinessTrip>();
+            }
+
         }
 
     }

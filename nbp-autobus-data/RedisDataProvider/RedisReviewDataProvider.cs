@@ -49,7 +49,11 @@ namespace nbp_autobus_data.RedisDataProvider
                     var totalGrade = (float)client.Get<int>(GetCarrierId(carrierId));
                     var reviewCount = (float)client.GetListCount(GetCarrierListId(carrierId));
 
-                    res = totalGrade / reviewCount;
+                    
+                    if (reviewCount != 0)
+                    {
+                        res = totalGrade / reviewCount;
+                    }
                 }
 
                 return res;

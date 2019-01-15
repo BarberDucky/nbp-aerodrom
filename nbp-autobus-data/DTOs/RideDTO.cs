@@ -18,11 +18,11 @@ namespace nbp_autobus_data.DTOs
         public DateTime TakeOfTime { get; set; }
         public DateTime ArrivalTime { get; set; }
         public DayOfWeek DayOfWeek { get; set; }
-
+        public RideType RideType { get; set; }
         public CarrierDTO Carrier { get; set; }
         public StationDTO ArrivalStation { get; set; }
         public StationDTO TakeOfStation { get; set; }
-
+        
         public ReadRideDTO(Ride ride)
         {
             Id = ride.Id;
@@ -31,6 +31,7 @@ namespace nbp_autobus_data.DTOs
             TakeOfTime = ride.TakeOfTime;
             ArrivalTime = ride.ArrivalTime;
             DayOfWeek = ride.DayOfWeek;
+            RideType = ride.RideType;
         }
 
         public ReadRideDTO(Ride ride, string carrierId, string arrivalStationId, string takeOfStationId)
@@ -77,6 +78,7 @@ namespace nbp_autobus_data.DTOs
         public DateTime TakeOfTime { get; set; }
         public DateTime ArrivalTime { get; set; }
         public DayOfWeek DayOfWeek { get; set; }
+        public RideType RideType { get; set; }
 
         public string CarrierId { get; set; }
         public string TakeOfStationId { get; set; }
@@ -84,13 +86,18 @@ namespace nbp_autobus_data.DTOs
 
         public static Ride FromDTO(CreateRideDTO dto)
         {
+            var time = new DateTime(2001, 1, 1);
+
             return new Ride()
             {
                 NumberOfSeats = dto.NumberOfSeats,
                 RidePrice = dto.RidePrice,
-                TakeOfTime = dto.TakeOfTime,
-                ArrivalTime = dto.ArrivalTime,
-                DayOfWeek = dto.DayOfWeek
+                TakeOfTime = new DateTime(time.Year, time.Month, time.Day,
+                dto.TakeOfTime.Hour, dto.TakeOfTime.Minute, dto.TakeOfTime.Second),
+                ArrivalTime = new DateTime(time.Year, time.Month, time.Day,
+                dto.ArrivalTime.Hour, dto.ArrivalTime.Minute, dto.ArrivalTime.Second),
+                DayOfWeek = dto.DayOfWeek,
+                RideType = dto.RideType
             };
         }
     }
@@ -102,17 +109,22 @@ namespace nbp_autobus_data.DTOs
         public DateTime TakeOfTime { get; set; }
         public DateTime ArrivalTime { get; set; }
         public DayOfWeek DayOfWeek { get; set; }
-        public String CarrierId { get; set; }
+        //public String CarrierId { get; set; }
+        public RideType RideType { get; set; }
 
         public static Ride FromDTO(UpdateRideDTO dto)
         {
+            var time = new DateTime(2001, 1, 1);
             return new Ride()
             {
                 NumberOfSeats = dto.NumberOfSeats,
                 RidePrice = dto.RidePrice,
-                TakeOfTime = dto.TakeOfTime,
-                ArrivalTime = dto.ArrivalTime,
-                DayOfWeek = dto.DayOfWeek
+                TakeOfTime = new DateTime(time.Year, time.Month, time.Day,
+                dto.TakeOfTime.Hour, dto.TakeOfTime.Minute, dto.TakeOfTime.Second),
+                ArrivalTime = new DateTime(time.Year, time.Month, time.Day,
+                dto.ArrivalTime.Hour, dto.ArrivalTime.Minute, dto.ArrivalTime.Second),
+                DayOfWeek = dto.DayOfWeek,
+                RideType = dto.RideType
             };
         }
     }
@@ -125,6 +137,7 @@ namespace nbp_autobus_data.DTOs
         public DateTime TakeOfTime { get; set; }
         public DateTime ArrivalTime { get; set; }
         public DayOfWeek DayOfWeek { get; set; }
+        public RideType RideType { get; set; }
 
         public StationDTO ArrivalStation { get; set; }
         public StationDTO TakeOfStation { get; set; }
@@ -137,6 +150,7 @@ namespace nbp_autobus_data.DTOs
             TakeOfTime = ride.TakeOfTime;
             ArrivalTime = ride.ArrivalTime;
             DayOfWeek = ride.DayOfWeek;
+            RideType = ride.RideType;
         }
         public RideOfCarrierDTO(BusinessRide ride)
             : this(ride.Ride)

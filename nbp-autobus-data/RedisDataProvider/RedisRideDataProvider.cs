@@ -36,6 +36,27 @@ namespace nbp_autobus_data.RedisDataProvider
             }
         }
 
+        public static bool UpdateRide(string rideId, int numSeats)
+        {
+            try
+            {
+                using (var client = new RedisClient(RedisDataLayer.SingleHost))
+                {
+                    if (client.Get<object>(GetRideId(rideId)) != null)
+                    {
+                        client.Set<int>(GetRideId(rideId), numSeats);
+                    }
+                    else
+                        return false;
+                }
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+        }
+
         public static bool ExistsRide(string rideId)
         {
             try

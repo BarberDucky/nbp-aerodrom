@@ -57,6 +57,7 @@ namespace nbp_autobus_data.DataProvider
         }
 
         #endregion
+
         public static string InsertCarrier(CarrierDTO dto)
         {
             try
@@ -97,12 +98,13 @@ namespace nbp_autobus_data.DataProvider
             try
             {
                 var query = DataLayer.Client.Cypher
-                    .Match("(carrier: Carrier) - [: CREATED_BY] -> (user: User)"
-                    , "(ride:Ride) - [: CARRIER] -> (carrier:Carrier)",
-                    "(r:Ride) < - [: TAKES_OF] - (takeOf:Station)",
-                    "(r:Ride) - [: ARRIVES] -> (arrival:Station)")
+                    .Match("(carrier: Carrier)-[CREATED_BY]->(user: User)")
                     .Where((Carrier carrier) => carrier.Id == carrierId)
-                    .AndWhere((Ride ride, Ride r) => ride.Id == r.Id)
+                    .OptionalMatch("(ride:Ride) - [: CARRIER] -> (c:Carrier)")
+                    .Where((Carrier carrier, Carrier c) => c.Id == carrierId)
+                    .OptionalMatch("(arrival:Station) <-[: ARRIVES] -(r: Ride) < - [: TAKES_OF] -(takeOf: Station)")
+                    // .OptionalMatch("(r: Ride) - [: ARRIVES] -> ")
+                    .Where((Ride ride, Ride r) => r.Id == ride.Id)
                     .Return((carrier, user, ride, takeOf, arrival) => new BusinessCarrier
                     {
                         Carrier = carrier.As<Carrier>(),
@@ -167,13 +169,13 @@ namespace nbp_autobus_data.DataProvider
             try
             {
                 var query = DataLayer.Client.Cypher
-                    .Match("(carrier: Carrier)-[CREATED_BY]->(user: User)",
-                    "(ride:Ride) - [: CARRIER] -> (c:Carrier)",
-                    "(r:Ride) < - [: TAKES_OF] - (takeOf:Station)",
-                    "(r:Ride) - [: ARRIVES] -> (arrival:Station)")
+                    .Match("(carrier: Carrier)-[CREATED_BY]->(user: User)")
                     .Where((User user) => user.Id == userId)
-                    .AndWhere((Ride ride, Ride r) => r.Id == ride.Id)
-                    .AndWhere((Carrier carrier, Carrier c) => c.Id == carrier.Id)
+                    .OptionalMatch("(ride:Ride) - [: CARRIER] -> (c:Carrier)")
+                    .Where((Carrier carrier, Carrier c) => c.Id == carrier.Id)
+                    .OptionalMatch("(arrival:Station) <-[: ARRIVES] -(r: Ride) < - [: TAKES_OF] -(takeOf: Station)")
+                   // .OptionalMatch("(r: Ride) - [: ARRIVES] -> ")
+                    .Where((Ride ride, Ride r) => r.Id == ride.Id)
                     .Return((carrier, ride, takeOf, arrival, user) => new BusinessCarrier
                     {
                         Carrier = carrier.As<Carrier>(),
