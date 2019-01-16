@@ -18,11 +18,26 @@ namespace nbp_autobus_data.DataProvider
         {
             if (dto.ArrivalStationId == dto.TakeOfStationId)
                 return false;
-            if (StationDataProvider.Get(dto.ArrivalStationId) == null)
+            //if (StationDataProvider.Get(dto.ArrivalStationId) == null)
+            //    return false;
+            //if (StationDataProvider.Get(dto.TakeOfStationId) == null)
+            //    return false;
+            //if (CarrierDataProvider.GetCarrier(dto.CarrierId) == null)
+            //    return false;
+            if (dto.RidePrice <= 0 || dto.NumberOfSeats <= 0)
                 return false;
-            if (StationDataProvider.Get(dto.TakeOfStationId) == null)
+            return true;
+        }
+
+        private static bool ValidateSearch(SearchDTO dto)
+        {
+            if (dto.NumberOfCards <= 0)
                 return false;
-            if (CarrierDataProvider.GetCarrier(dto.CarrierId) == null)
+            if (dto.TakeOfStationId == dto.ArrivalStationId)
+                return false;
+            if (dto.TakeOfDate > dto.ArrivalDate)
+                return false;
+            if (dto.IsRoundAbout && dto.TakeOfDateRoundAbout > dto.ArrivalDateRoundAbout)
                 return false;
             return true;
         }
@@ -32,8 +47,8 @@ namespace nbp_autobus_data.DataProvider
 
             try
             {
-                //if (!Validate(dto))
-                //    return null;
+                if (!Validate(dto))
+                    return null;
 
                 Ride newRide = CreateRideDTO.FromDTO(dto);
                 newRide.Id = Guid.NewGuid().ToString();
@@ -226,6 +241,10 @@ namespace nbp_autobus_data.DataProvider
             try
             {
                 var result = new SearchResultsDTO();
+
+                if (!ValidateSearch(search))
+                    return result;
+
                 if (search.IsRoundAbout)
                 {
                     var oneWaySearch = SearchDTO.FromDTO(search);
@@ -254,7 +273,7 @@ namespace nbp_autobus_data.DataProvider
 
                     result.OneWayTrip = resultOneWay;
                 }
-               
+
                 return result;
 
 
@@ -326,7 +345,7 @@ namespace nbp_autobus_data.DataProvider
                 card.Card.TakeOfDate = takeOfDate;
                 card.Card.TakeOfDate = card.Card.TakeOfDate.AddHours(takeOfTime.Hour);
                 card.Card.TakeOfDate = card.Card.TakeOfDate.AddMinutes(takeOfTime.Minute);
-               
+
 
                 while (start < rides.Rides.Count() && rides.Rides.ToList()[start].CarrierId == currentCarrier)
                 {

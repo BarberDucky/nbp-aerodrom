@@ -92,10 +92,7 @@ namespace nbp_autobus_data.DataProvider
 
         public static String RegisterUser(UserDTO dto)
         {
-            //Ako vec postoji user sa tim emailom
-            if (CheckIfExists(dto.Email))
-                return null;
-
+         
             User user = UserDTO.FromDTO(dto);
             user.Id = Guid.NewGuid().ToString();
 

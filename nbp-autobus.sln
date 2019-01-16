@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nbp-autobus-data", "nbp-autobus-data\nbp-autobus-data.csproj", "{933BD2A7-7D52-417F-B2E7-BB2A7B16A49E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test-api", "test-api\test-api.csproj", "{F0BDE437-7170-4157-B3A7-446734D010B6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nbp-autobus-api", "test-api\nbp-autobus-api.csproj", "{F0BDE437-7170-4157-B3A7-446734D010B6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -11,11 +11,20 @@ namespace nbp_autobus_data.DataProvider
 {
     public class ReviewDataProvider
     {
-       
+        private static bool Validate(CreateReviewDTO dto)
+        {
+            if (dto.Grade < 1 || dto.Grade > 5)
+                return false;
+            return true;
+        }
+
         public static string InsertReview(CreateReviewDTO dto)
         {
             try
             {
+                if (!Validate(dto))
+                    return null;
+
                 Review newReview = CreateReviewDTO.FromDTO(dto);
                 newReview.Id = Guid.NewGuid().ToString();
 

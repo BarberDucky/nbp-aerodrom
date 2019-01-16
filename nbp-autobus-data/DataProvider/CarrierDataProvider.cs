@@ -62,9 +62,6 @@ namespace nbp_autobus_data.DataProvider
         {
             try
             {
-                if (ExistsCarrier(dto.Name))
-                    return null;
-
                 if (UserDataProvider.GetUser(dto.UserId) == null)
                     return null;
 
