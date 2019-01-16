@@ -14,11 +14,6 @@ namespace test_api.Controllers
     [EnableCors(origins: "*", headers: "*", methods: "*")]
     public class RideController : ApiController
     {
-        // GET: api/Ride
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
 
         // GET: api/Ride/5
         public ReadRideDTO Get(string id)

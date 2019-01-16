@@ -39,14 +39,5 @@ namespace test_api.Controllers
             return ReviewDataProvider.InsertReview(value);
         }
 
-        // PUT: api/Review/5
-        public void Put(int id, [FromBody]string value)
-        {
-        }
-
-        // DELETE: api/Review/5
-        public void Delete(int id)
-        {
-        }
     }
 }

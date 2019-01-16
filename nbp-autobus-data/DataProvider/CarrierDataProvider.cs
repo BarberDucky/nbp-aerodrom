@@ -103,7 +103,6 @@ namespace nbp_autobus_data.DataProvider
                     .OptionalMatch("(ride:Ride) - [: CARRIER] -> (c:Carrier)")
                     .Where((Carrier carrier, Carrier c) => c.Id == carrierId)
                     .OptionalMatch("(arrival:Station) <-[: ARRIVES] -(r: Ride) < - [: TAKES_OF] -(takeOf: Station)")
-                    // .OptionalMatch("(r: Ride) - [: ARRIVES] -> ")
                     .Where((Ride ride, Ride r) => r.Id == ride.Id)
                     .Return((carrier, user, ride, takeOf, arrival) => new BusinessCarrier
                     {
@@ -133,12 +132,10 @@ namespace nbp_autobus_data.DataProvider
         {
             try
             {
-                //if (ExistsCarrier(dto.Name))
-                //    return false;
-
+                
                 Dictionary<string, object> queryDict = new Dictionary<string, object>
                 {
-                   // { "Name", dto.Name },
+                   
                     { "PhoneNumber", dto.PhoneNumber },
                     { "Website", dto.Website }
                 };
@@ -146,7 +143,6 @@ namespace nbp_autobus_data.DataProvider
                 var query = DataLayer.Client.Cypher
                     .Match("(carrier: Carrier)")
                     .Where((Carrier carrier) => carrier.Id == carrierdId)
-                    // .Set("carrier.Name = {Name}")
                     .Set("carrier.PhoneNumber = {PhoneNumber}")
                     .Set("carrier.Website = {Website}")
                     .WithParams(queryDict)
@@ -174,7 +170,6 @@ namespace nbp_autobus_data.DataProvider
                     .OptionalMatch("(ride:Ride) - [: CARRIER] -> (c:Carrier)")
                     .Where((Carrier carrier, Carrier c) => c.Id == carrier.Id)
                     .OptionalMatch("(arrival:Station) <-[: ARRIVES] -(r: Ride) < - [: TAKES_OF] -(takeOf: Station)")
-                    // .OptionalMatch("(r: Ride) - [: ARRIVES] -> ")
                     .Where((Ride ride, Ride r) => r.Id == ride.Id)
                     .Return((carrier, ride, takeOf, arrival, user) => new BusinessCarrier
                     {
@@ -207,11 +202,7 @@ namespace nbp_autobus_data.DataProvider
                     })
                     .Results;
 
-                //if (query != null && query.Count() > 0)
-                //{
-                //    return CarrierDTO.FromEntityList(query);
-                //}
-                //return null;
+                
                 return CarrierDTO.FromEntityList(query);
             }
             catch (Exception e)
@@ -230,7 +221,6 @@ namespace nbp_autobus_data.DataProvider
                     .OptionalMatch("(ride:Ride) - [: CARRIER] -> (c:Carrier)")
                     .Where((Carrier carrier, Carrier c) => c.Id == carrier.Id)
                     .OptionalMatch("(arrival:Station) <-[: ARRIVES] -(r: Ride) < - [: TAKES_OF] -(takeOf: Station)")
-                    // .OptionalMatch("(r: Ride) - [: ARRIVES] -> ")
                     .Where((Ride ride, Ride r) => r.Id == ride.Id)
                     .Return((carrier, ride, takeOf, arrival, user) => new BusinessCarrier
                     {

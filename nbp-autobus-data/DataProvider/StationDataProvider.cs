@@ -38,6 +38,7 @@ namespace nbp_autobus_data.DataProvider
         {
             try
             {
+                //TODO pogledati da li moze sa merge
                 if (ExistsStation(dto.Name))
                     return null;
 

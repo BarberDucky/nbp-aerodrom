@@ -31,14 +31,6 @@ namespace test_api.Controllers
             return StationDataProvider.InsertStation(dto);
         }
 
-        // PUT: api/Station/5
-        public void Put(int id, [FromBody]string value)
-        {
-        }
-
-        // DELETE: api/Station/5
-        public void Delete(int id)
-        {
-        }
+       
     }
 }

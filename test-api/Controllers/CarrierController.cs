@@ -52,9 +52,5 @@ namespace test_api.Controllers
             return CarrierDataProvider.UpdateCarrier(id, value);
         }
 
-        // DELETE: api/Carrier/5
-        public void Delete(int id)
-        {
-        }
     }
 }

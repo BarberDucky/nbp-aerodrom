@@ -65,7 +65,7 @@ namespace nbp_autobus_data.DataProvider
             }
         }
 
-        public static UserDTO LogInUser(string email, string password)
+        public static ReadUserDTO LogInUser(string email, string password)
         {
             Dictionary<string, object> queryDict = new Dictionary<string, object>
             {
@@ -80,7 +80,7 @@ namespace nbp_autobus_data.DataProvider
                 List<User> users = ((IRawGraphClient)DataLayer.Client).ExecuteGetCypherResults<User>(query).ToList();
                 if (users.Count > 0)
                 {
-                    return new UserDTO(users[0]);
+                    return new ReadUserDTO(users[0]);
                 }
                 return null;
             }

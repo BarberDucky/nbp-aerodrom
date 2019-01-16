@@ -28,12 +28,6 @@ namespace test_api.Controllers
             return CardDataProvider.GetRidesOfCard(cardId);
         }
 
-        // GET: api/Card/5
-        public string Get(int id)
-        {
-            return "value";
-        }
-
         // POST: api/Card
         [HttpPost]
         [Route("api/Card/User/{userId}/NumberOfSeats/{numSeats}")]
@@ -42,14 +36,5 @@ namespace test_api.Controllers
             return CardDataProvider.InsertTrip(value, userId, numSeats);
         }
 
-        // PUT: api/Card/5
-        public void Put(int id, [FromBody]string value)
-        {
-        }
-
-        // DELETE: api/Card/5
-        public void Delete(int id)
-        {
-        }
     }
 }

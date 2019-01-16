@@ -13,11 +13,6 @@ namespace test_api.Controllers
     [EnableCors(origins: "*", headers: "*", methods: "*")]
     public class UserController : ApiController
     {
-        // GET: api/User
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
 
         // GET: api/User/5
         public UserDTO Get(string id)
@@ -28,7 +23,7 @@ namespace test_api.Controllers
         
         [HttpPost]
         [Route("api/User/Login")]
-        public UserDTO LogIn([FromBody]UserDTO user)
+        public ReadUserDTO LogIn([FromBody]UserDTO user)
         {
             return UserDataProvider.LogInUser(user.Email, user.Password);
         }
@@ -46,9 +41,5 @@ namespace test_api.Controllers
             return UserDataProvider.UpdateUser(id, value);
         }
 
-        // DELETE: api/User/5
-        public void Delete(int id)
-        {
-        }
     }
 }

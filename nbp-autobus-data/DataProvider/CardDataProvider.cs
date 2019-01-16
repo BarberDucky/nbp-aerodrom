@@ -17,8 +17,6 @@ namespace nbp_autobus_data.DataProvider
             {
                 Card newCard = card.Card;
                 newCard.Id = Guid.NewGuid().ToString();
-                //TODO Get seat number
-                newCard.SeatNumber = 0;
 
                 var query = DataLayer.Client.Cypher
                     .Create("(card : Card {newCard})")
@@ -33,6 +31,8 @@ namespace nbp_autobus_data.DataProvider
                     .Create("(card) - [: CARD_TAKES_OF] -> (takeOf)")
                     .Return<Card>("card")
                     .Results;
+
+                //TODO test jel moze sa id in nesto
                 if (query != null)
                 {
                     foreach (var ride in card.Rides)

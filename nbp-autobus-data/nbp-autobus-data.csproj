@@ -107,7 +107,6 @@
     <Compile Include="DataProvider\UserDataProvider.cs" />
     <Compile Include="DTOs\CardDTO.cs" />
     <Compile Include="DTOs\CarrierDTO.cs" />
-    <Compile Include="DTOs\ReservationDTO.cs" />
     <Compile Include="DTOs\ReviewDTO.cs" />
     <Compile Include="DTOs\RideDTO.cs" />
     <Compile Include="DTOs\SearchDTO.cs" />

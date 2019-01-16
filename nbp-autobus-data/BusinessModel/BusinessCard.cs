@@ -13,8 +13,6 @@ namespace nbp_autobus_data.BusinessModel
         public List<BusinessRide> Rides { get; set; }
         public Station TakeOfStation { get; set; }
         public Station ArrivalStation { get; set; }
-        //public string CarrierId { get; set; }
-        //public string CarrierName { get; set; }
 
         public BusinessCard()
         {

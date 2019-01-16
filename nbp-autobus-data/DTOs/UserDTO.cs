@@ -42,4 +42,26 @@ namespace nbp_autobus_data.DTOs
             LastName = u.LastName;
         }
     }
+
+    public class ReadUserDTO
+    {
+        public String Id { get; set; }
+        public String Email { get; set; }
+        public String Name { get; set; }
+        public String LastName { get; set; }
+        public String PassportNumber { get; set; }
+
+        public ReadUserDTO()
+        {
+
+        }
+        public ReadUserDTO(User u)
+        {
+            Id = u.Id;
+            Email = u.Email;
+            PassportNumber = u.PassportNumber;
+            Name = u.Name;
+            LastName = u.LastName;
+        }
+    }
 }
