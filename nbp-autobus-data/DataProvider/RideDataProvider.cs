@@ -205,10 +205,6 @@ namespace nbp_autobus_data.DataProvider
 
                 var valid = CheckIfPathInRange(query, search);
 
-                //check da li ima mesta
-
-               // var checkNumSeats = RedisCardDataProvider.CheckNumberOfSeats(valid, search);
-
                 var result = GetSearchResults(valid, search.TakeOfDate);
 
                 RedisSearchDataProvider.CacheSearch(search, result.ToList());
