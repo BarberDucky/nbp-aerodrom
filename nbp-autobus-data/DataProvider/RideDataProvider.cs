@@ -14,6 +14,7 @@ namespace nbp_autobus_data.DataProvider
 {
     public class RideDataProvider
     {
+        #region Private
         private static bool Validate(CreateRideDTO dto)
         {
             if (dto.ArrivalStationId == dto.TakeOfStationId)
@@ -42,6 +43,191 @@ namespace nbp_autobus_data.DataProvider
             return true;
         }
 
+        private static IEnumerable<BusinessRideRelationship> CheckIfPathInRange(IEnumerable<BusinessRideRelationship> paths, RedisSearch search)
+        {
+            List<BusinessRideRelationship> list = new List<BusinessRideRelationship>();
+            DateTime arrivalDate = search.ArrivalDate.Date;
+            DateTime takeOfDate = search.TakeOfDate.Date;
+
+            foreach (var path in paths)
+            {
+                if (path.Rides.Count() > 0)
+                {
+                    var firstRideInPath = path.Rides.ToList()[0];
+                    if (CheckNumSeats(takeOfDate.AddDays(DayDifference(takeOfDate.DayOfWeek, firstRideInPath.DayOfWeek)),
+                        search.NumberOfCards, firstRideInPath.Id))
+                    {
+                        var totalDays = 0;
+                        bool add = true;
+                        for (int i = 1; i < path.Rides.Count(); i++)
+                        {
+                            var rideI = path.Rides.ToList()[i];
+                            var rideIMin = path.Rides.ToList()[i - 1];
+
+                            totalDays += DayDifference(rideIMin.DayOfWeek, rideI.DayOfWeek);
+                            if (takeOfDate.AddDays(totalDays) > arrivalDate)
+                            {
+                                add = false;
+                                break;
+                            }
+                            if (!CheckNumSeats(takeOfDate.AddDays(DayDifference(takeOfDate.DayOfWeek, rideI.DayOfWeek)),
+                                search.NumberOfCards, rideI.Id))
+                            {
+                                add = false;
+                                break;
+                            }
+
+                        }
+                        if (add)
+                            list.Add(path);
+                    }
+                }
+
+            }
+            return list;
+        }
+
+        private static bool CheckNumSeats(DateTime takeOfDate, int numCards, string rideId)
+        {
+            var numSeats = RedisCardDataProvider.CheckExistsNumSeats(rideId, takeOfDate, numCards);
+            if (!numSeats)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        private static IEnumerable<BusinessTrip> GetSearchResults(IEnumerable<BusinessRideRelationship> rides, DateTime TakeOfDate)
+        {
+            List<BusinessTrip> results = new List<BusinessTrip>();
+
+            foreach (var path in rides)
+            {
+                results.Add(GroupByCarrier(path, TakeOfDate));
+            }
+            return results;
+        }
+
+        private static BusinessTrip GroupByCarrier(BusinessRideRelationship rides, DateTime TakeOfDate)
+        {
+            int start = 0;
+            BusinessTrip trip = new BusinessTrip();
+
+            while (start < rides.Rides.Count())
+            {
+                var currentCarrier = rides.Rides.ToList()[start].CarrierId;
+                var currentCarrierName = rides.Rides.ToList()[start].CarrierName;
+                var rideDay = rides.Rides.ToList()[start].DayOfWeek;
+                var takeOfDate = TakeOfDate.AddDays((rideDay - TakeOfDate.DayOfWeek + 7) % 7);
+                var takeOfTime = rides.Rides.ToList()[start].TakeOfTime;
+                BusinessCard card = new BusinessCard()
+                {
+                    TakeOfStation = rides.Stations.ToList()[start]
+                };
+
+                card.Card.CarrierId = currentCarrier;
+                card.Card.CarrierName = currentCarrierName;
+                card.Card.TakeOfDate = takeOfDate;
+                card.Card.TakeOfDate = card.Card.TakeOfDate.AddHours(takeOfTime.Hour);
+                card.Card.TakeOfDate = card.Card.TakeOfDate.AddMinutes(takeOfTime.Minute);
+
+
+                while (start < rides.Rides.Count() && rides.Rides.ToList()[start].CarrierId == currentCarrier)
+                {
+                    card.Card.Price += rides.Rides.ToList()[start].RidePrice;
+                    trip.TotalCost += rides.Rides.ToList()[start].RidePrice;
+                    Ride ride = new Ride(rides.Rides.ToList()[start]);
+                    var rDay = ride.DayOfWeek;
+                    card.Rides.Add(new BusinessRide()
+                    {
+                        Ride = ride,
+                        TakeOfDate = TakeOfDate.AddDays((rDay - TakeOfDate.DayOfWeek + 7) % 7),
+                        TakeOfStation = rides.Stations.ToList()[start],
+                        ArrivalStation = rides.Stations.ToList()[start + 1]
+                    });
+
+                    start++;
+                }
+                card.ArrivalStation = rides.Stations.ToList()[start];
+                trip.CardsInTrip.Add(card);
+                trip.OverlayNumber++;
+
+            }
+            return trip;
+        }
+
+        private static IEnumerable<BusinessTrip> GetTripsInPath(RedisSearch search)
+        {
+            try
+            {
+                var cachedResult = RedisSearchDataProvider.GetCachedSearch(search);
+                if (cachedResult != null)
+                    return cachedResult;
+
+                var takeOfDay = search.TakeOfDate.DayOfWeek;
+                var maxPrice = search.MaxCardPrice;
+                if (maxPrice == 0)
+                    maxPrice = float.MaxValue;
+                RideType[] rideTypes;
+                if (search.RideTypes == null ||
+                    (search.RideTypes != null && search.RideTypes.Count == 0))
+                {
+                    rideTypes = new RideType[3];
+                    rideTypes[0] = RideType.Bus;
+                    rideTypes[1] = RideType.Car;
+                    rideTypes[2] = RideType.MiniBus;
+                }
+                else
+                {
+                    rideTypes = search.RideTypes.ToArray();
+                }
+
+                var query = DataLayer.Client.Cypher
+                    .Match("p = (takeOf: Station) - [ride: RIDE *..15]->(arrive: Station)")
+                    .Where((Station takeOf) => takeOf.Id == search.TakeOfStationId)
+                    .AndWhere((Station arrive) => arrive.Id == search.ArrivalStationId)
+                    .AndWhere("(ride[0]).DayOfWeek = {takeOfDay} ")
+                    .WithParam("takeOfDay", takeOfDay)
+                    .AndWhere("all (index in range(0, size(ride) -2)" +
+                    " where ( (ride[index]).ArrivalTime <= (ride[index+1]).TakeOfTime and (ride[index]).DayOfWeek = (ride[index+1]).DayOfWeek ) " +
+                    "or (ride[index]).DayOfWeek <> (ride[index+1]).DayOfWeek )")
+                    .AndWhere("reduce (s = 0, r in relationships(p) | " +
+                    " s + r.RidePrice) < {maxPrice} ")
+                    .WithParam("maxPrice", maxPrice)
+                    .AndWhere("all (r in relationships(p) where r.RideType in {rideTypes})")
+                    .WithParam("rideTypes", rideTypes)
+                    .Return(() => new BusinessRideRelationship
+                    {
+                        Rides = Return.As<IEnumerable<RideRelationship>>("relationships (p)"),
+                        Stations = Return.As<IEnumerable<Station>>("nodes (p)"),
+                    })
+                    .Results;
+
+                var valid = CheckIfPathInRange(query, search);
+
+                //check da li ima mesta
+
+               // var checkNumSeats = RedisCardDataProvider.CheckNumberOfSeats(valid, search);
+
+                var result = GetSearchResults(valid, search.TakeOfDate);
+
+                RedisSearchDataProvider.CacheSearch(search, result.ToList());
+
+                return result;
+            }
+            catch (Exception e)
+            {
+                return new List<BusinessTrip>();
+            }
+
+        }
+
+        private static int DayDifference(DayOfWeek start, DayOfWeek end)
+        {
+            return (end - start + 7) % 7;
+        }
+
+        #endregion
         public static ReadRideDTO InsertRide(CreateRideDTO dto)
         {
 
@@ -282,159 +468,6 @@ namespace nbp_autobus_data.DataProvider
             {
                 return new SearchResultsDTO();
             }
-        }
-
-        private static IEnumerable<BusinessRideRelationship> CheckIfPathInRange(IEnumerable<BusinessRideRelationship> paths, RedisSearch search)
-        {
-            List<BusinessRideRelationship> list = new List<BusinessRideRelationship>();
-            DateTime arrivalDate = search.ArrivalDate.Date;
-            DateTime takeOfDate = search.TakeOfDate.Date;
-
-            foreach (var path in paths)
-            {
-                var totalDays = 0;
-                bool add = true;
-                for (int i = 1; i < path.Rides.Count(); i++)
-                {
-                    totalDays += (path.Rides.ToList()[i].DayOfWeek - path.Rides.ToList()[i - 1].DayOfWeek + 7) % 7;
-                    if (takeOfDate.AddDays(totalDays) > arrivalDate)
-                    {
-                        add = false;
-                        break;
-                    }
-
-                }
-                if (add)
-                    list.Add(path);
-            }
-            return list;
-        }
-
-        private static IEnumerable<BusinessTrip> GetSearchResults(IEnumerable<BusinessRideRelationship> rides, DateTime TakeOfDate)
-        {
-            List<BusinessTrip> results = new List<BusinessTrip>();
-
-            foreach (var path in rides)
-            {
-                results.Add(GroupByCarrier(path, TakeOfDate));
-            }
-            return results;
-        }
-
-        private static BusinessTrip GroupByCarrier(BusinessRideRelationship rides, DateTime TakeOfDate)
-        {
-            int start = 0;
-            BusinessTrip trip = new BusinessTrip();
-
-            while (start < rides.Rides.Count())
-            {
-                var currentCarrier = rides.Rides.ToList()[start].CarrierId;
-                var currentCarrierName = rides.Rides.ToList()[start].CarrierName;
-                var rideDay = rides.Rides.ToList()[start].DayOfWeek;
-                var takeOfDate = TakeOfDate.AddDays((rideDay - TakeOfDate.DayOfWeek + 7) % 7);
-                var takeOfTime = rides.Rides.ToList()[start].TakeOfTime;
-                BusinessCard card = new BusinessCard()
-                {
-                    //CarrierId = currentCarrier,
-                    //CarrierName = currentCarrierName,
-                    TakeOfStation = rides.Stations.ToList()[start]
-                };
-
-                card.Card.CarrierId = currentCarrier;
-                card.Card.CarrierName = currentCarrierName;
-                card.Card.TakeOfDate = takeOfDate;
-                card.Card.TakeOfDate = card.Card.TakeOfDate.AddHours(takeOfTime.Hour);
-                card.Card.TakeOfDate = card.Card.TakeOfDate.AddMinutes(takeOfTime.Minute);
-
-
-                while (start < rides.Rides.Count() && rides.Rides.ToList()[start].CarrierId == currentCarrier)
-                {
-                    card.Card.Price += rides.Rides.ToList()[start].RidePrice;
-                    trip.TotalCost += rides.Rides.ToList()[start].RidePrice;
-                    Ride ride = new Ride(rides.Rides.ToList()[start]);
-                    var rDay = ride.DayOfWeek;
-                    card.Rides.Add(new BusinessRide()
-                    {
-                        Ride = ride,
-                        TakeOfDate = TakeOfDate.AddDays((rDay - TakeOfDate.DayOfWeek + 7) % 7),
-                        TakeOfStation = rides.Stations.ToList()[start],
-                        ArrivalStation = rides.Stations.ToList()[start + 1]
-                    });
-
-                    start++;
-                }
-                card.ArrivalStation = rides.Stations.ToList()[start];
-                trip.CardsInTrip.Add(card);
-                trip.OverlayNumber++;
-
-            }
-            return trip;
-        }
-
-        private static IEnumerable<BusinessTrip> GetTripsInPath(RedisSearch search)
-        {
-            try
-            {
-                var cachedResult = RedisSearchDataProvider.GetCachedSearch(search);
-                if (cachedResult != null)
-                    return cachedResult;
-
-                var takeOfDay = search.TakeOfDate.DayOfWeek;
-                var maxPrice = search.MaxCardPrice;
-                if (maxPrice == 0)
-                    maxPrice = float.MaxValue;
-                RideType[] rideTypes;
-                if (search.RideTypes == null ||
-                    (search.RideTypes != null && search.RideTypes.Count == 0))
-                {
-                    rideTypes = new RideType[3];
-                    rideTypes[0] = RideType.Bus;
-                    rideTypes[1] = RideType.Car;
-                    rideTypes[2] = RideType.MiniBus;
-                }
-                else
-                {
-                    rideTypes = search.RideTypes.ToArray();
-                }
-
-                var query = DataLayer.Client.Cypher
-                    .Match("p = (takeOf: Station) - [ride: RIDE *..15]->(arrive: Station)")
-                    .Where((Station takeOf) => takeOf.Id == search.TakeOfStationId)
-                    .AndWhere((Station arrive) => arrive.Id == search.ArrivalStationId)
-                    .AndWhere("(ride[0]).DayOfWeek = {takeOfDay} ")
-                    .WithParam("takeOfDay", takeOfDay)
-                    .AndWhere("all (index in range(0, size(ride) -2)" +
-                    " where ( (ride[index]).ArrivalTime <= (ride[index+1]).TakeOfTime and (ride[index]).DayOfWeek = (ride[index]).DayOfWeek ) " +
-                    "or (ride[index]).DayOfWeek <> (ride[index]).DayOfWeek )")
-                    .AndWhere("reduce (s = 0, r in relationships(p) | " +
-                    " s + r.RidePrice) < {maxPrice} ")
-                    .WithParam("maxPrice", maxPrice)
-                    .AndWhere("all (r in relationships(p) where r.RideType in {rideTypes})")
-                    .WithParam("rideTypes", rideTypes)
-                    .Return(() => new BusinessRideRelationship
-                    {
-                        Rides = Return.As<IEnumerable<RideRelationship>>("relationships (p)"),
-                        Stations = Return.As<IEnumerable<Station>>("nodes (p)"),
-                    })
-                    .Results;
-
-                var valid = CheckIfPathInRange(query, search);
-
-                //check da li ima mesta
-
-                var checkNumSeats = RedisCardDataProvider.CheckNumberOfSeats(valid, search);
-
-                var result = GetSearchResults(checkNumSeats, search.TakeOfDate);
-
-                RedisSearchDataProvider.CacheSearch(search, result.ToList());
-
-                return result;
-            }
-            catch (Exception e)
-            {
-                return new List<BusinessTrip>();
-            }
-
         }
 
     }

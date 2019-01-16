@@ -34,7 +34,7 @@ namespace nbp_autobus_data.RedisDataProvider
             return $"list:ride:{RideId}date:{date.Date}:id";
         }
 
-        private static bool CheckExistsNumSeats(string RideId, DateTime date, int numSeats)
+        public static bool CheckExistsNumSeats(string RideId, DateTime date, int numSeats)
         {
             try
             {
@@ -64,7 +64,7 @@ namespace nbp_autobus_data.RedisDataProvider
             }
         }
 
-        private static bool CheckExistsNumSeats(BusinessTrip trip, int numCards)
+        public static bool CheckExistsNumSeats(BusinessTrip trip, int numCards)
         {
             foreach (var card in trip.CardsInTrip)
             {

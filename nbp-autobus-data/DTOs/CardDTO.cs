@@ -13,6 +13,8 @@ namespace nbp_autobus_data.DTOs
         public String Id { get; set; }
         public float Price { get; set; }
         public DateTime TakeOfDate { get; set; }
+        public String CarrierId { get; set; }
+        public String CarrierName { get; set; }
         public StationDTO ArrivalStation { get; set; }
         public StationDTO TakeOfStation { get; set; }
 
@@ -21,6 +23,8 @@ namespace nbp_autobus_data.DTOs
             Id = card.Id;
             Price = card.Price;
             TakeOfDate = card.TakeOfDate;
+            CarrierId = card.CarrierId;
+            CarrierName = card.CarrierName;
         }
 
         public CardDTO(BusinessCard card)
