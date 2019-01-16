@@ -53,20 +53,33 @@ namespace nbp_autobus_data.DataProvider
                     .Create("(ride) - [: CARRIER] -> (carrier)")
                     .Create("(takeOf) - [r: RIDE {rideRel}] -> (arrival)")
                     .WithParam("rideRel", rel)
-                     .Return((ride, arrival, takeOf, carrier) => new BusinessRide()
-                     {
-                         Ride = ride.As<Ride>(),
-                         Carrier = carrier.As<Carrier>(),
-                         ArrivalStation = arrival.As<Station>(),
-                         TakeOfStation = takeOf.As<Station>()
+                    .Return((ride, arrival, takeOf, carrier) => new BusinessRide()
+                    {
+                        Ride = ride.As<Ride>(),
+                        Carrier = carrier.As<Carrier>(),
+                        ArrivalStation = arrival.As<Station>(),
+                        TakeOfStation = takeOf.As<Station>()
 
-                     }).Results;
+                    }).Results;
 
                 if (query != null && query.Count() > 0)
                 {
                     var ride = query.ToList();
-                    RedisRideDataProvider.InsertRide(newRide.Id, newRide.NumberOfSeats);
-                    return new ReadRideDTO(ride[0]);
+                    var carrierName = ride[0].Carrier.Name;
+                    var q = DataLayer.Client.Cypher
+                        .Match("(takeOf:Station) - [r: RIDE] -> (arrival:Station)")
+                        .Where((RideRelationship r) => r.Id == newRide.Id)
+                        .Set("r.CarrierName = {carrierName}")
+                        .WithParam("carrierName", carrierName)
+                        .Return<RideRelationship>("r")
+                        .Results;
+
+                    if (q != null)
+                    {
+                        RedisRideDataProvider.InsertRide(newRide.Id, newRide.NumberOfSeats);
+                        return new ReadRideDTO(ride[0]);
+                    }
+
                 }
                 return null;
             }
@@ -223,7 +236,9 @@ namespace nbp_autobus_data.DataProvider
                         ArrivalStationId = search.TakeOfStationId,
                         TakeOfStationId = search.ArrivalStationId,
                         TakeOfDate = search.TakeOfDateRoundAbout,
-                        ArrivalDate = search.ArrivalDateRoundAbout
+                        ArrivalDate = search.ArrivalDateRoundAbout,
+                        MaxCardPrice = search.MaxCardPrice,
+                        RideTypes = search.RideTypes
                     };
 
                     var resultOneWay = GetTripsInPath(oneWaySearch);
@@ -239,43 +254,7 @@ namespace nbp_autobus_data.DataProvider
 
                     result.OneWayTrip = resultOneWay;
                 }
-                //var cachedResult = RedisSearchDataProvider.GetCachedSearch(search);
-                //if (cachedResult != null)
-                //    return cachedResult;
-
-                //var takeOfDay = search.TakeOfDate.DayOfWeek;
-
-                //var query = DataLayer.Client.Cypher
-                //    .Match("p = (takeOf: Station) - [ride: RIDE *..5]->(arrive: Station)")
-                //    .Where((Station takeOf) => takeOf.Id == search.TakeOfStationId)
-                //    .AndWhere((Station arrive) => arrive.Id == search.ArrivalStationId)
-                //    .AndWhere("(ride[0]).DayOfWeek = {takeOfDay} ")
-                //    .WithParam("takeOfDay", takeOfDay)
-                //    .AndWhere("all (index in range(0, size(ride) -2)" +
-                //    " where ( (ride[index]).ArrivalTime <= (ride[index+1]).TakeOfTime and (ride[index]).DayOfWeek = (ride[index]).DayOfWeek ) " +
-                //    "or (ride[index]).DayOfWeek <> (ride[index]).DayOfWeek )")
-                //    //.AndWhere("all (index in range(0, size(ride) -2)" +
-                //    //" where ( (ride[index]).ArrivalTime < (ride[index+1]).TakeOfTime and (ride[index]).DayOfWeek = (ride[index]).DayOfWeek ) " +
-                //    //"or (ride[index]).DayOfWeek <> (ride[index]).DayOfWeek )")
-                //    //  .Return<IEnumerable<RideRelationship>>("relationships (p)")
-                //    .Return(() => new BusinessRideRelationship
-                //    {
-                //        Rides = Return.As<IEnumerable<RideRelationship>>("relationships (p)"),
-                //        Stations = Return.As<IEnumerable<Station>>("nodes (p)"),
-                //    })
-                //    .Results;
-
-                //var valid = CheckIfPathInRange(query, search);
-
-                ////check da li ima mesta
-
-                //var checkNumSeats = RedisReservationDataProvider.CheckNumberOfSeats(valid, search);
-
-                //var result = GetSearchResults(checkNumSeats, search.TakeOfDate);
-
-                //RedisSearchDataProvider.CacheSearch(search, result.ToList());
-
-                //return result;
+               
                 return result;
 
 
@@ -331,13 +310,23 @@ namespace nbp_autobus_data.DataProvider
             while (start < rides.Rides.Count())
             {
                 var currentCarrier = rides.Rides.ToList()[start].CarrierId;
+                var currentCarrierName = rides.Rides.ToList()[start].CarrierName;
                 var rideDay = rides.Rides.ToList()[start].DayOfWeek;
+                var takeOfDate = TakeOfDate.AddDays((rideDay - TakeOfDate.DayOfWeek + 7) % 7);
+                var takeOfTime = rides.Rides.ToList()[start].TakeOfTime;
                 BusinessCard card = new BusinessCard()
                 {
-                    CarrierId = currentCarrier,
+                    //CarrierId = currentCarrier,
+                    //CarrierName = currentCarrierName,
                     TakeOfStation = rides.Stations.ToList()[start]
                 };
-                card.Card.TakeOfDate = TakeOfDate.AddDays((rideDay - TakeOfDate.DayOfWeek + 7) % 7);
+
+                card.Card.CarrierId = currentCarrier;
+                card.Card.CarrierName = currentCarrierName;
+                card.Card.TakeOfDate = takeOfDate;
+                card.Card.TakeOfDate = card.Card.TakeOfDate.AddHours(takeOfTime.Hour);
+                card.Card.TakeOfDate = card.Card.TakeOfDate.AddMinutes(takeOfTime.Minute);
+               
 
                 while (start < rides.Rides.Count() && rides.Rides.ToList()[start].CarrierId == currentCarrier)
                 {
@@ -375,12 +364,18 @@ namespace nbp_autobus_data.DataProvider
                 var maxPrice = search.MaxCardPrice;
                 if (maxPrice == 0)
                     maxPrice = float.MaxValue;
-                RideType[] rideTypes = search.RideTypes.ToArray();
-                if(search.RideTypes.Count == 0)
+                RideType[] rideTypes;
+                if (search.RideTypes == null ||
+                    (search.RideTypes != null && search.RideTypes.Count == 0))
                 {
+                    rideTypes = new RideType[3];
                     rideTypes[0] = RideType.Bus;
                     rideTypes[1] = RideType.Car;
                     rideTypes[2] = RideType.MiniBus;
+                }
+                else
+                {
+                    rideTypes = search.RideTypes.ToArray();
                 }
 
                 var query = DataLayer.Client.Cypher
@@ -408,7 +403,7 @@ namespace nbp_autobus_data.DataProvider
 
                 //check da li ima mesta
 
-                var checkNumSeats = RedisReservationDataProvider.CheckNumberOfSeats(valid, search);
+                var checkNumSeats = RedisCardDataProvider.CheckNumberOfSeats(valid, search);
 
                 var result = GetSearchResults(checkNumSeats, search.TakeOfDate);
 

@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace nbp_autobus_data.RedisDataProvider
 {
-    public class RedisReservationDataProvider
+    public class RedisCardDataProvider
     {
         private static string GetRideDateId(RedisReservation reservation)
         {
@@ -23,7 +23,7 @@ namespace nbp_autobus_data.RedisDataProvider
             return $"list:ride:{reservation.RideId}date:{reservation.Date.Date}:id";
         }
 
-        #region Cards
+       
         private static string GetRideDateId(string RideId, DateTime date)
         {
             return $"ride:{RideId}date:{date.Date}:id";
@@ -145,106 +145,8 @@ namespace nbp_autobus_data.RedisDataProvider
             return list;
         }
 
-        #endregion
+       
 
-        private bool AddRideDate(RedisReservation reservation)
-        {
-            try
-            {
-                if (!RedisRideDataProvider.ExistsRide(reservation.RideId))
-                    return false;
-
-                using (var client = new RedisClient(RedisDataLayer.SingleHost))
-                {
-                    var existsRes = client.Get<RedisReservation>(GetRideDateId(reservation));
-
-                    if (existsRes == null)
-                    {
-                        client.Set<RedisReservation>(GetRideDateId(reservation), reservation);
-                    }
-                    return true;
-
-                }
-
-            }
-            catch (Exception e)
-            {
-                return false;
-            }
-        }
-
-        private long GetListCount(RedisReservation reservation)
-        {
-            try
-            {
-                using (var client = new RedisClient(RedisDataLayer.SingleHost))
-                {
-                    return client.GetListCount(GetRideDateListId(reservation));
-                }
-
-            }
-            catch (Exception e)
-            {
-                return -1;
-            }
-        }
-
-        private bool AddToList(RedisReservation res, string resId)
-        {
-            try
-            {
-                using (var client = new RedisClient(RedisDataLayer.SingleHost))
-                {
-                    client.PushItemToList(GetRideDateListId(res), resId);
-                    return true;
-                }
-
-            }
-            catch (Exception e)
-            {
-                return false;
-            }
-        }
-
-        public bool AddReservation(CreateReservationDTO dto, string reservationId)
-        {
-            try
-            {
-                foreach (var rideId in dto.RidesId)
-                {
-                    RedisReservation redisR = new RedisReservation
-                    {
-                        Date = dto.Date,
-                        RideId = rideId
-                    };
-
-                    if (!AddRideDate(redisR))
-                        return false;
-
-                    int numSeats = RedisRideDataProvider.NumSeats(rideId);
-                    long seatsCount = GetListCount(redisR);
-                    if (numSeats <= seatsCount)
-                        return false;
-                }
-
-                foreach (var rideId in dto.RidesId)
-                {
-                    RedisReservation redisR = new RedisReservation
-                    {
-                        Date = dto.Date,
-                        RideId = rideId
-                    };
-
-                    AddToList(redisR, reservationId);
-                }
-
-                return true;
-            }
-
-            catch (Exception e)
-            {
-                return false;
-            }
-        }
+        
     }
 }

@@ -16,6 +16,7 @@ namespace nbp_autobus_data.Model
         public RideType RideType { get; set; }
       
         public String CarrierId { get; set; }
+        public String CarrierName { get; set; }
 
         public RideRelationship()
         {

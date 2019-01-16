@@ -12,5 +12,7 @@ namespace nbp_autobus_data.Model
         public int SeatNumber { get; set; }
         public float Price { get; set; }
         public DateTime TakeOfDate { get; set; }
+        public String CarrierName { get; set; }
+        public String CarrierId { get; set; }
     }
 }

@@ -62,7 +62,7 @@ namespace nbp_autobus_data.DataProvider
         {
             try
             {
-                if (!RedisDataProvider.RedisReservationDataProvider.AddCards(trip, numSeats))
+                if (!RedisDataProvider.RedisCardDataProvider.AddCards(trip, numSeats))
                     return false;
                 for (int i = 0; i < numSeats; i++)
                 {

@@ -26,8 +26,8 @@ namespace test_api.Controllers
         // POST: api/Reservation
         public void Post([FromBody]CreateReservationDTO value)
         {
-            RedisReservationDataProvider p = new RedisReservationDataProvider();
-            p.AddReservation(value, Guid.NewGuid().ToString());
+            RedisCardDataProvider p = new RedisCardDataProvider();
+            //p.AddReservation(value, Guid.NewGuid().ToString());
         }
 
         // PUT: api/Reservation/5
